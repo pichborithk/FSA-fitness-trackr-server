@@ -3,6 +3,22 @@ const client = require('./client');
 // database functions
 async function createActivity({ name, description }) {
   // return the new activity
+  try {
+    const { rows } = await client.query(
+      `
+      INSERT INTO activities (name, description)
+      VALUES ($1, $2)
+      ON CONFLICT (name) DO NOTHING
+      RETURNING *;
+      `,
+      [name.toLowerCase(), description]
+    );
+
+    const [activity] = rows;
+    return activity;
+  } catch (error) {
+    console.error(error);
+  }
 }
 
 async function getAllActivities() {
