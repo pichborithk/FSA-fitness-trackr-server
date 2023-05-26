@@ -19,6 +19,10 @@ async function createUser({ username, password }) {
       [username, hash]
     );
 
+    if (!rows || rows.length <= 0) {
+      throw Error('Fail to create user');
+    }
+
     const [user] = rows;
     delete user.password;
     return user;
@@ -53,6 +57,7 @@ async function getUserById(userId) {
       `,
       [userId]
     );
+
     const [user] = rows;
     return user;
   } catch (error) {
@@ -70,6 +75,7 @@ async function getUserByUsername(username) {
       `,
       [username]
     );
+
     const [user] = rows;
     return user;
   } catch (error) {
