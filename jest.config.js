@@ -3,5 +3,5 @@ module.exports = {
   globalSetup: './tests/setup.js',
   globalTeardown: './tests/tearDown.js',
   collectCoverage: false,
-  forceExit: true
+  forceExit: true,
 };
