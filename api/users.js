@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 
 const { createUser, getUserByUsername, getUser } = require('../db/users');
 const { getAllRoutinesByUser, getPublicRoutinesByUser } = require('../db');
+const deserializeUser = require('../middleware/deserializeUser');
 
 const router = express.Router();
 
@@ -121,24 +122,11 @@ router.get('/me', async (req, res, next) => {
 });
 
 // GET /api/users/:username/routines
-router.get('/:username/routines', async (req, res, next) => {
+router.get('/:username/routines', deserializeUser, async (req, res, next) => {
   const { username } = req.params;
-  const prefix = 'Bearer ';
-  const auth = req.headers.authorization;
-  if (!auth) {
-    // return next({
-    //   name: 'AuthorizationHeaderError',
-    //   message: 'You must be logged in to perform this action',
-    // });
-    const routines = await getPublicRoutinesByUser({ username });
-    return res.status(200).json(routines);
-  }
 
-  const token = auth.slice(prefix.length);
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-    if (decoded.username === username) {
+    if (req.user.username === username) {
       const routines = await getAllRoutinesByUser({ username });
       res.status(200).json(routines);
     } else {
