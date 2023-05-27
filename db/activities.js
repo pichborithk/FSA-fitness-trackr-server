@@ -1,5 +1,4 @@
 const client = require('./client');
-const { getRoutineActivitiesByRoutine } = require('./routine_activities');
 
 // database functions
 async function createActivity({ name, description }) {
@@ -77,9 +76,26 @@ async function getActivityByName(name) {
 // used as a helper inside db/routines.js
 async function attachActivitiesToRoutines(routines) {
   for (let routine of routines) {
-    routine.activities = await getRoutineActivitiesByRoutine({
-      id: routine.id,
-    });
+    // routine.activities = await getRoutineActivitiesByRoutine({
+    //   id: routine.id,
+    // });
+
+    try {
+      const { rows } = await client.query(
+        `
+        SELECT activities.*,
+        routine_activities.duration, routine_activities.count, routine_activities.id as "routineActivityId", routine_activities."routineId"
+        FROM activities
+        JOIN routine_activities ON routine_activities."activityId"=activities.id
+        WHERE "routineId"=$1;
+        `,
+        [routine.id]
+      );
+
+      routine.activities = rows;
+    } catch (error) {
+      console.error(error);
+    }
   }
 }
 
@@ -88,7 +104,7 @@ async function updateActivity({ id, ...fields }) {
   // do update the name and description
   // return the updated activity
   const setString = Object.keys(fields)
-    .map((key, index) => `"${key}"=$${index + 1}`)
+    .map((key, index) => `"${key}"=$${index + 2}`)
     .join(', ');
 
   try {
@@ -96,10 +112,10 @@ async function updateActivity({ id, ...fields }) {
       `
       UPDATE activities
       SET ${setString}
-      WHERE id=${id}
+      WHERE id=$1
       RETURNING *;
       `,
-      Object.values(fields)
+      [id, ...Object.values(fields)]
     );
 
     const [activity] = rows;
