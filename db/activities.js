@@ -16,7 +16,6 @@ async function createActivity({ name, description }) {
     );
 
     const [activity] = rows;
-    activity.name = activity.name[0].toUpperCase() + activity.name.slice(1);
     return activity;
   } catch (error) {
     console.error(error);
