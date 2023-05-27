@@ -3,6 +3,7 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 
 const { createUser, getUserByUsername, getUser } = require('../db/users');
+const { getAllRoutinesByUser, getPublicRoutinesByUser } = require('../db');
 
 const router = express.Router();
 
@@ -16,13 +17,20 @@ router.post('/register', async (req, res, next) => {
     });
   }
 
+  if (password.length < 8) {
+    return next({
+      name: 'MissingCredentialsError',
+      message: 'Password Too Short!',
+    });
+  }
+
   try {
     const _user = await getUserByUsername(username);
 
     if (_user) {
       return next({
         name: 'UserExistsError',
-        message: 'A user by that username already exists',
+        message: `User ${_user.username} is already taken.`,
       });
     }
 
@@ -39,10 +47,15 @@ router.post('/register', async (req, res, next) => {
       expiresIn: '1w',
     });
 
-    res.send({
+    res.status(200).json({
       success: true,
       error: null,
-      data: { message: 'thank you for signing up', token },
+      token,
+      message: 'thank you for signing up',
+      user: {
+        id: user.id,
+        username,
+      },
     });
   } catch (error) {
     next(error);
@@ -71,10 +84,15 @@ router.post('/login', async (req, res, next) => {
       expiresIn: '1w',
     });
 
-    res.send({
+    res.status(200).json({
       success: true,
+      message: `you're logged in!`,
+      token,
       error: null,
-      data: { message: 'thank you for signing up', token },
+      user: {
+        id: user.id,
+        username,
+      },
     });
   } catch (error) {
     next(error);
@@ -82,6 +100,54 @@ router.post('/login', async (req, res, next) => {
 });
 // GET /api/users/me
 
+router.get('/me', async (req, res, next) => {
+  const prefix = 'Bearer ';
+  const auth = req.headers.authorization;
+  if (!auth) {
+    return next({
+      name: 'AuthorizationHeaderError',
+      message: 'You must be logged in to perform this action',
+    });
+  }
+  const token = auth.slice(prefix.length);
+
+  try {
+    const { id, username } = jwt.verify(token, process.env.JWT_SECRET);
+
+    res.status(200).json({ id, username });
+  } catch (error) {
+    next(error);
+  }
+});
+
 // GET /api/users/:username/routines
+router.get('/:username/routines', async (req, res, next) => {
+  const { username } = req.params;
+  const prefix = 'Bearer ';
+  const auth = req.headers.authorization;
+  if (!auth) {
+    // return next({
+    //   name: 'AuthorizationHeaderError',
+    //   message: 'You must be logged in to perform this action',
+    // });
+    const routines = await getPublicRoutinesByUser({ username });
+    return res.status(200).json(routines);
+  }
+
+  const token = auth.slice(prefix.length);
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    if (decoded.username === username) {
+      const routines = await getAllRoutinesByUser({ username });
+      res.status(200).json(routines);
+    } else {
+      const routines = await getPublicRoutinesByUser({ username });
+      res.status(200).json(routines);
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 
 module.exports = router;
