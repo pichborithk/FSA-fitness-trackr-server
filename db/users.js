@@ -37,7 +37,7 @@ async function getUser({ username, password }) {
 
     const isValid = await bcrypt.compare(password, user.password);
     if (!isValid) {
-      throw Error('Password incorrect, please try again');
+      return null;
     }
 
     delete user.password;

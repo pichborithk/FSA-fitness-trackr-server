@@ -12,10 +12,11 @@ async function createActivity({ name, description }) {
       ON CONFLICT (name) DO NOTHING
       RETURNING *;
       `,
-      [name.toLowerCase(), description]
+      [name, description]
     );
 
     const [activity] = rows;
+    activity.name = activity.name[0].toUpperCase() + activity.name.slice(1);
     return activity;
   } catch (error) {
     console.error(error);
@@ -60,7 +61,7 @@ async function getActivityByName(name) {
   try {
     const { rows } = await client.query(
       `
-      SELECT id, name 
+      SELECT * 
       FROM activities
       WHERE name=$1;
       `,
@@ -94,7 +95,7 @@ async function updateActivity({ id, ...fields }) {
   try {
     const { rows } = await client.query(
       `
-      UPDATE posts
+      UPDATE activities
       SET ${setString}
       WHERE id=${id}
       RETURNING *;
