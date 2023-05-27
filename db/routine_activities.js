@@ -46,9 +46,10 @@ async function getRoutineActivitiesByRoutine({ id }) {
   try {
     const { rows } = await client.query(
       `
-      SELECT activities.*, routine_activities.duration, routine_activities.count, routine_activities.id as "routineActivityId", routine_activities."routineId"
-      FROM routine_activities
-      JOIN activities ON routine_activities."activityId"= activities.id
+      SELECT activities.*,
+      routine_activities.duration, routine_activities.count, routine_activities.id as "routineActivityId", routine_activities."routineId"
+      FROM activities
+      JOIN routine_activities ON routine_activities."activityId"= activities.id
       WHERE "routineId"=$1;
       `,
       [id]
