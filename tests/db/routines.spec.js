@@ -7,7 +7,7 @@ require('dotenv').config();
 const faker = require('faker');
 const client = require('../../db/client');
 const {
-  getRoutineById,
+  // getRoutineById,
   getAllRoutines,
   getAllPublicRoutines,
   getAllRoutinesByUser,
@@ -407,7 +407,7 @@ describe('DB Routines', () => {
     });
   });
 
-  xdescribe('updateRoutine', () => {
+  describe('updateRoutine', () => {
     it('Returns the updated routine', async () => {
       const fakeRoutine = await createFakePublicRoutine();
 
@@ -452,7 +452,7 @@ describe('DB Routines', () => {
     });
   });
 
-  xdescribe('destroyRoutine', () => {
+  describe('destroyRoutine', () => {
     it('removes routine from database', async () => {
       const fakeRoutine = await createFakePublicRoutine();
       await destroyRoutine(fakeRoutine.id);

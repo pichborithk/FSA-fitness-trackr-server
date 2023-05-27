@@ -46,10 +46,9 @@ async function getRoutineActivitiesByRoutine({ id }) {
   try {
     const { rows } = await client.query(
       `
-      SELECT activities.*,
-      routine_activities.duration, routine_activities.count, routine_activities.id as "routineActivityId", routine_activities."routineId"
+      SELECT routine_activities.*, activities.name, activities.description
       FROM activities
-      JOIN routine_activities ON routine_activities."activityId"= activities.id
+      JOIN routine_activities ON routine_activities."activityId"=activities.id
       WHERE "routineId"=$1;
       `,
       [id]
@@ -61,11 +60,69 @@ async function getRoutineActivitiesByRoutine({ id }) {
   }
 }
 
-async function updateRoutineActivity({ id, ...fields }) {}
+async function updateRoutineActivity({ id, ...fields }) {
+  const setString = Object.keys(fields)
+    .map((key, index) => `"${key}"=$${index + 2}`)
+    .join(', ');
 
-async function destroyRoutineActivity(id) {}
+  try {
+    const { rows } = await client.query(
+      `
+      UPDATE routine_activities
+      SET ${setString}
+      WHERE id=$1
+      RETURNING *;
+      `,
+      [id, ...Object.values(fields)]
+    );
 
-async function canEditRoutineActivity(routineActivityId, userId) {}
+    const [routineActivity] = rows;
+    return routineActivity;
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+async function destroyRoutineActivity(id) {
+  try {
+    const { rows } = await client.query(
+      `
+      DELETE FROM routine_activities
+      WHERE id=$1
+      RETURNING *;
+      `,
+      [id]
+    );
+
+    const [routineActivity] = rows;
+    return routineActivity;
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+async function canEditRoutineActivity(routineActivityId, userId) {
+  try {
+    const { rows } = await client.query(
+      `
+      SELECT routines."creatorId"
+      FROM routines
+      JOIN routine_activities ON routine_activities."routineId" = routines.id
+      WHERE routine_activities.id=$1;
+      `,
+      [routineActivityId]
+    );
+
+    const [routineActivity] = rows;
+    if (routineActivity.creatorId === userId) {
+      return true;
+    } else {
+      return false;
+    }
+  } catch (error) {
+    console.error(error);
+  }
+}
 
 module.exports = {
   getRoutineActivityById,
