@@ -12,4 +12,8 @@ app.use(express.json());
 
 app.use('/api', require('./api'));
 
+app.all('*', (req, res) => {
+  res.status(404).json({ message: 'Not Found' });
+});
+
 module.exports = app;
