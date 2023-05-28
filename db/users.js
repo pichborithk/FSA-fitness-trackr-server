@@ -20,7 +20,7 @@ async function createUser({ username, password }) {
     );
 
     if (!rows || rows.length <= 0) {
-      throw Error('Fail to create user');
+      return null;
     }
 
     const [user] = rows;
